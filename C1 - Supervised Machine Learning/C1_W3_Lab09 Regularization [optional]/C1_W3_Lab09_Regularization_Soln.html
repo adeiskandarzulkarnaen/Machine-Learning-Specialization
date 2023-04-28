@@ -2,7 +2,7 @@
 <html>
 <head><meta charset="utf-8" />
 
-<title>C1_W3_Lab05_Cost_Function_Soln</title>
+<title>C1_W3_Lab09_Regularization_Soln</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -13088,9 +13088,17 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="Optional-Lab:-Cost-Function-for-Logistic-Regression">Optional Lab: Cost Function for Logistic Regression<a class="anchor-link" href="#Optional-Lab:-Cost-Function-for-Logistic-Regression">&#182;</a></h1><h2 id="Goals">Goals<a class="anchor-link" href="#Goals">&#182;</a></h2><p>In this lab, you will:</p>
+<h1 id="Optional-Lab---Regularized-Cost-and-Gradient">Optional Lab - Regularized Cost and Gradient<a class="anchor-link" href="#Optional-Lab---Regularized-Cost-and-Gradient">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Goals">Goals<a class="anchor-link" href="#Goals">&#182;</a></h2><p>In this lab, you will:</p>
 <ul>
-<li>examine the implementation and utilize the cost function for logistic regression.</li>
+<li>extend the previous linear and logistic cost functions with a regularization term.</li>
+<li>rerun the previous example of over-fitting with a regularization term added.</li>
 </ul>
 
 </div>
@@ -13104,8 +13112,9 @@ div#notebook {
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="o">%</span><span class="k">matplotlib</span> widget
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">lab_utils_common</span> <span class="kn">import</span>  <span class="n">plot_data</span><span class="p">,</span> <span class="n">sigmoid</span><span class="p">,</span> <span class="n">dlc</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;./deeplearning.mplstyle&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">plt_overfit</span> <span class="kn">import</span> <span class="n">overfit_example</span><span class="p">,</span> <span class="n">output</span>
+<span class="kn">from</span> <span class="nn">lab_utils_common</span> <span class="kn">import</span> <span class="n">sigmoid</span>
+<span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13116,7 +13125,36 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Dataset">Dataset<a class="anchor-link" href="#Dataset">&#182;</a></h2><p>Let's start with the same dataset as was used in the decision boundary lab.</p>
+<h1 id="Adding-regularization">Adding regularization<a class="anchor-link" href="#Adding-regularization">&#182;</a></h1><p><img align="Left" src="./images/C1_W3_LinearGradientRegularized.png"  style=" width:400px; padding: 10px; " >
+<img align="Center" src="./images/C1_W3_LogisticGradientRegularized.png"  style=" width:400px; padding: 10px; " ></p>
+<p>The slides above show the cost and gradient functions for both linear and logistic regression. Note:</p>
+<ul>
+<li>Cost<ul>
+<li>The cost functions differ significantly between linear and logistic regression, but adding regularization to the equations is the same.</li>
+</ul>
+</li>
+<li>Gradient<ul>
+<li>The gradient functions for linear and logistic regression are very similar. They differ only in the implementation of $f_{wb}$.</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Cost-functions-with-regularization">Cost functions with regularization<a class="anchor-link" href="#Cost-functions-with-regularization">&#182;</a></h2><h3 id="Cost-function-for-regularized-linear-regression">Cost function for regularized linear regression<a class="anchor-link" href="#Cost-function-for-regularized-linear-regression">&#182;</a></h3><p>The equation for the cost function regularized linear regression is:
+$$J(\mathbf{w},b) = \frac{1}{2m} \sum\limits_{i = 0}^{m-1} (f_{\mathbf{w},b}(\mathbf{x}^{(i)}) - y^{(i)})^2  + \frac{\lambda}{2m}  \sum_{j=0}^{n-1} w_j^2 \tag{1}$$ 
+where:
+$$ f_{\mathbf{w},b}(\mathbf{x}^{(i)}) = \mathbf{w} \cdot \mathbf{x}^{(i)} + b  \tag{2} $$</p>
+<p>Compare this to the cost function without regularization (which you implemented in  a previous lab), which is of the form:</p>
+$$J(\mathbf{w},b) = \frac{1}{2m} \sum\limits_{i = 0}^{m-1} (f_{\mathbf{w},b}(\mathbf{x}^{(i)}) - y^{(i)})^2 $$<p></p>
+<p>The difference is the regularization term,  <span style="color:blue">
+    $\frac{\lambda}{2m}  \sum_{j=0}^{n-1} w_j^2$ </span></p>
+<p>Including this term encourages gradient descent to minimize the size of the parameters. Note, in this example, the parameter $b$ is not regularized. This is standard practice.</p>
+<p>Below is an implementation of equations (1) and (2). Note that this uses a <em>standard pattern for this course</em>,   a <code>for loop</code> over all <code>m</code> examples.</p>
 
 </div>
 </div>
@@ -13126,8 +13164,34 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">X_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">]])</span>  <span class="c1">#(m,n)</span>
-<span class="n">y_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>                                           <span class="c1">#(m,)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">compute_cost_linear_reg</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">lambda_</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the cost over all examples</span>
+<span class="sd">    Args:</span>
+<span class="sd">      X (ndarray (m,n): Data, m examples with n features</span>
+<span class="sd">      y (ndarray (m,)): target values</span>
+<span class="sd">      w (ndarray (n,)): model parameters  </span>
+<span class="sd">      b (scalar)      : model parameter</span>
+<span class="sd">      lambda_ (scalar): Controls amount of regularization</span>
+<span class="sd">    Returns:</span>
+<span class="sd">      total_cost (scalar):  cost </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">m</span>  <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">n</span>  <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="n">f_wb_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">w</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span>                                   <span class="c1">#(n,)(n,)=scalar, see np.dot</span>
+        <span class="n">cost</span> <span class="o">=</span> <span class="n">cost</span> <span class="o">+</span> <span class="p">(</span><span class="n">f_wb_i</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span>                               <span class="c1">#scalar             </span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="n">cost</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">m</span><span class="p">)</span>                                              <span class="c1">#scalar  </span>
+ 
+    <span class="n">reg_cost</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">reg_cost</span> <span class="o">+=</span> <span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>                                          <span class="c1">#scalar</span>
+    <span class="n">reg_cost</span> <span class="o">=</span> <span class="p">(</span><span class="n">lambda_</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">m</span><span class="p">))</span> <span class="o">*</span> <span class="n">reg_cost</span>                              <span class="c1">#scalar</span>
+    
+    <span class="n">total_cost</span> <span class="o">=</span> <span class="n">cost</span> <span class="o">+</span> <span class="n">reg_cost</span>                                       <span class="c1">#scalar</span>
+    <span class="k">return</span> <span class="n">total_cost</span>                                                  <span class="c1">#scalar</span>
 </pre></div>
 
     </div>
@@ -13138,7 +13202,7 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>We will use a helper function to plot this data. The data points with label $y=1$ are shown as red crosses, while the data points with label $y=0$ are shown as blue circles.</p>
+<p>Run the cell below to see it in action.</p>
 
 </div>
 </div>
@@ -13148,14 +13212,15 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
-<span class="n">plot_data</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">X_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">y_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">w_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">X_tmp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span><span class="o">-</span><span class="mf">0.5</span>
+<span class="n">b_tmp</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">lambda_tmp</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">cost_tmp</span> <span class="o">=</span> <span class="n">compute_cost_linear_reg</span><span class="p">(</span><span class="n">X_tmp</span><span class="p">,</span> <span class="n">y_tmp</span><span class="p">,</span> <span class="n">w_tmp</span><span class="p">,</span> <span class="n">b_tmp</span><span class="p">,</span> <span class="n">lambda_tmp</span><span class="p">)</span>
 
-<span class="c1"># Set both axes to be from 0-4</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">])</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;$x_1$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;$x_0$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Regularized cost:&quot;</span><span class="p">,</span> <span class="n">cost_tmp</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13171,21 +13236,10 @@ div#notebook {
     <div class="prompt"></div>
 
 
-
-
-
- 
- 
-<div id="7b249bbb-6a47-4e1d-8c13-6a167a49dd9a"></div>
-<div class="output_subarea output_widget_view ">
-<script type="text/javascript">
-var element = $('#7b249bbb-6a47-4e1d-8c13-6a167a49dd9a');
-</script>
-<script type="application/vnd.jupyter.widget-view+json">
-{"model_id": "3603f8a6534647fe899d2070c0e63757", "version_major": 2, "version_minor": 0}
-</script>
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Regularized cost: 0.07917239320214275
+</pre>
 </div>
-
 </div>
 
 </div>
@@ -13195,33 +13249,26 @@ var element = $('#7b249bbb-6a47-4e1d-8c13-6a167a49dd9a');
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Cost-function">Cost function<a class="anchor-link" href="#Cost-function">&#182;</a></h2><p>In a previous lab, you developed the <em>logistic loss</em> function. Recall, loss is defined to apply to one example. Here you combine the losses to form the <strong>cost</strong>, which includes all the examples.</p>
-<p>Recall that for logistic regression, the cost function is of the form</p>
-$$ J(\mathbf{w},b) = \frac{1}{m} \sum_{i=0}^{m-1} \left[ loss(f_{\mathbf{w},b}(\mathbf{x}^{(i)}), y^{(i)}) \right] \tag{1}$$<p>where</p>
-<ul>
-<li><p>$loss(f_{\mathbf{w},b}(\mathbf{x}^{(i)}), y^{(i)})$ is the cost for a single data point, which is:</p>
-<p>$$loss(f_{\mathbf{w},b}(\mathbf{x}^{(i)}), y^{(i)}) = -y^{(i)} \log\left(f_{\mathbf{w},b}\left( \mathbf{x}^{(i)} \right) \right) - \left( 1 - y^{(i)}\right) \log \left( 1 - f_{\mathbf{w},b}\left( \mathbf{x}^{(i)} \right) \right) \tag{2}$$</p>
-</li>
-<li><p>where m is the number of training examples in the data set and:
-$$
-\begin{align}
-f_{\mathbf{w},b}(\mathbf{x^{(i)}}) &amp;= g(z^{(i)})\tag{3} \\
-z^{(i)} &amp;= \mathbf{w} \cdot \mathbf{x}^{(i)}+ b\tag{4} \\
-g(z^{(i)}) &amp;= \frac{1}{1+e^{-z^{(i)}}}\tag{5} 
-\end{align}
-$$</p>
-</li>
-</ul>
-
+<p><strong>Expected Output</strong>:</p>
+<table>
+  <tr>
+    <td> <b>Regularized cost: </b> 0.07917239320214275 </td>
+  </tr>
+</table>
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><a name='ex-02'></a></p>
-<h4 id="Code-Description">Code Description<a class="anchor-link" href="#Code-Description">&#182;</a></h4><p>The algorithm for <code>compute_cost_logistic</code> loops over all the examples calculating the loss for each example and accumulating the total.</p>
-<p>Note that the variables X and y are not scalar values but matrices of shape ($m, n$) and ($𝑚$,) respectively, where  $𝑛$ is the number of features and $𝑚$ is the number of training examples.</p>
+<h3 id="Cost-function-for-regularized-logistic-regression">Cost function for regularized logistic regression<a class="anchor-link" href="#Cost-function-for-regularized-logistic-regression">&#182;</a></h3><p>For regularized <strong>logistic</strong> regression, the cost function is of the form
+$$J(\mathbf{w},b) = \frac{1}{m}  \sum_{i=0}^{m-1} \left[ -y^{(i)} \log\left(f_{\mathbf{w},b}\left( \mathbf{x}^{(i)} \right) \right) - \left( 1 - y^{(i)}\right) \log \left( 1 - f_{\mathbf{w},b}\left( \mathbf{x}^{(i)} \right) \right) \right] + \frac{\lambda}{2m}  \sum_{j=0}^{n-1} w_j^2 \tag{3}$$
+where:
+$$ f_{\mathbf{w},b}(\mathbf{x}^{(i)}) = sigmoid(\mathbf{w} \cdot \mathbf{x}^{(i)} + b)  \tag{4} $$</p>
+<p>Compare this to the cost function without regularization (which you implemented in  a previous lab):</p>
+$$ J(\mathbf{w},b) = \frac{1}{m}\sum_{i=0}^{m-1} \left[ (-y^{(i)} \log\left(f_{\mathbf{w},b}\left( \mathbf{x}^{(i)} \right) \right) - \left( 1 - y^{(i)}\right) \log \left( 1 - f_{\mathbf{w},b}\left( \mathbf{x}^{(i)} \right) \right)\right] $$<p>As was the case in linear regression above, the difference is the regularization term, which is    <span style="color:blue">
+    $\frac{\lambda}{2m}  \sum_{j=0}^{n-1} w_j^2$ </span></p>
+<p>Including this term encourages gradient descent to minimize the size of the parameters. Note, in this example, the parameter $b$ is not regularized. This is standard practice.</p>
 
 </div>
 </div>
@@ -13231,29 +13278,36 @@ $$</p>
 <div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">compute_cost_logistic</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">compute_cost_logistic_reg</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">lambda_</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Computes cost</span>
-
+<span class="sd">    Computes the cost over all examples</span>
 <span class="sd">    Args:</span>
-<span class="sd">      X (ndarray (m,n)): Data, m examples with n features</span>
-<span class="sd">      y (ndarray (m,)) : target values</span>
-<span class="sd">      w (ndarray (n,)) : model parameters  </span>
-<span class="sd">      b (scalar)       : model parameter</span>
-<span class="sd">      </span>
+<span class="sd">    Args:</span>
+<span class="sd">      X (ndarray (m,n): Data, m examples with n features</span>
+<span class="sd">      y (ndarray (m,)): target values</span>
+<span class="sd">      w (ndarray (n,)): model parameters  </span>
+<span class="sd">      b (scalar)      : model parameter</span>
+<span class="sd">      lambda_ (scalar): Controls amount of regularization</span>
 <span class="sd">    Returns:</span>
-<span class="sd">      cost (scalar): cost</span>
+<span class="sd">      total_cost (scalar):  cost </span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">m</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">m</span><span class="p">,</span><span class="n">n</span>  <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="mf">0.</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
-        <span class="n">z_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">w</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span>
-        <span class="n">f_wb_i</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">z_i</span><span class="p">)</span>
-        <span class="n">cost</span> <span class="o">+=</span>  <span class="o">-</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">f_wb_i</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">f_wb_i</span><span class="p">)</span>
+        <span class="n">z_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">w</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span>                                      <span class="c1">#(n,)(n,)=scalar, see np.dot</span>
+        <span class="n">f_wb_i</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">z_i</span><span class="p">)</span>                                          <span class="c1">#scalar</span>
+        <span class="n">cost</span> <span class="o">+=</span>  <span class="o">-</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">f_wb_i</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">f_wb_i</span><span class="p">)</span>      <span class="c1">#scalar</span>
              
-    <span class="n">cost</span> <span class="o">=</span> <span class="n">cost</span> <span class="o">/</span> <span class="n">m</span>
-    <span class="k">return</span> <span class="n">cost</span>
+    <span class="n">cost</span> <span class="o">=</span> <span class="n">cost</span><span class="o">/</span><span class="n">m</span>                                                      <span class="c1">#scalar</span>
+
+    <span class="n">reg_cost</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">reg_cost</span> <span class="o">+=</span> <span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>                                          <span class="c1">#scalar</span>
+    <span class="n">reg_cost</span> <span class="o">=</span> <span class="p">(</span><span class="n">lambda_</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">m</span><span class="p">))</span> <span class="o">*</span> <span class="n">reg_cost</span>                              <span class="c1">#scalar</span>
+    
+    <span class="n">total_cost</span> <span class="o">=</span> <span class="n">cost</span> <span class="o">+</span> <span class="n">reg_cost</span>                                       <span class="c1">#scalar</span>
+    <span class="k">return</span> <span class="n">total_cost</span>                                                  <span class="c1">#scalar</span>
 </pre></div>
 
     </div>
@@ -13264,7 +13318,7 @@ $$</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Check the implementation of the cost function using the cell below.</p>
+<p>Run the cell below to see it in action.</p>
 
 </div>
 </div>
@@ -13274,9 +13328,15 @@ $$</p>
 <div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">w_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
-<span class="n">b_tmp</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">compute_cost_logistic</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">w_tmp</span><span class="p">,</span> <span class="n">b_tmp</span><span class="p">))</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">X_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">y_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">w_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">X_tmp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span><span class="o">-</span><span class="mf">0.5</span>
+<span class="n">b_tmp</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">lambda_tmp</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">cost_tmp</span> <span class="o">=</span> <span class="n">compute_cost_logistic_reg</span><span class="p">(</span><span class="n">X_tmp</span><span class="p">,</span> <span class="n">y_tmp</span><span class="p">,</span> <span class="n">w_tmp</span><span class="p">,</span> <span class="n">b_tmp</span><span class="p">,</span> <span class="n">lambda_tmp</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Regularized cost:&quot;</span><span class="p">,</span> <span class="n">cost_tmp</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13293,7 +13353,7 @@ $$</p>
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>0.36686678640551745
+<pre>Regularized cost: 0.6850849138741673
 </pre>
 </div>
 </div>
@@ -13305,7 +13365,27 @@ $$</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><strong>Expected output</strong>: 0.3668667864055175</p>
+<p><strong>Expected Output</strong>:</p>
+<table>
+  <tr>
+    <td> <b>Regularized cost: </b> 0.6850849138741673 </td>
+  </tr>
+</table>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Gradient-descent-with-regularization">Gradient descent with regularization<a class="anchor-link" href="#Gradient-descent-with-regularization">&#182;</a></h2><p>The basic algorithm for running gradient descent does not change with regularization, it is:
+$$\begin{align*}
+&amp;\text{repeat until convergence:} \; \lbrace \\
+&amp;  \; \; \;w_j = w_j -  \alpha \frac{\partial J(\mathbf{w},b)}{\partial w_j} \tag{1}  \; &amp; \text{for j := 0..n-1} \\ 
+&amp;  \; \; \;  \; \;b = b -  \alpha \frac{\partial J(\mathbf{w},b)}{\partial b} \\
+&amp;\rbrace
+\end{align*}$$
+Where each iteration performs simultaneous updates on $w_j$ for all $j$.</p>
+<p>What changes with regularization is computing the gradients.</p>
 
 </div>
 </div>
@@ -13313,19 +13393,33 @@ $$</p>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Example">Example<a class="anchor-link" href="#Example">&#182;</a></h2><p>Now, let's see what the cost function output is for a different value of $w$.</p>
+<h3 id="Computing-the-Gradient-with-regularization-(both-linear/logistic)">Computing the Gradient with regularization (both linear/logistic)<a class="anchor-link" href="#Computing-the-Gradient-with-regularization-(both-linear/logistic)">&#182;</a></h3><p>The gradient calculation for both linear and logistic regression are nearly identical, differing only in computation of $f_{\mathbf{w}b}$.
+$$\begin{align*}
+\frac{\partial J(\mathbf{w},b)}{\partial w_j}  &amp;= \frac{1}{m} \sum\limits_{i = 0}^{m-1} (f_{\mathbf{w},b}(\mathbf{x}^{(i)}) - y^{(i)})x_{j}^{(i)}  +  \frac{\lambda}{m} w_j \tag{2} \\
+\frac{\partial J(\mathbf{w},b)}{\partial b}  &amp;= \frac{1}{m} \sum\limits_{i = 0}^{m-1} (f_{\mathbf{w},b}(\mathbf{x}^{(i)}) - y^{(i)}) \tag{3} 
+\end{align*}$$</p>
 <ul>
-<li><p>In a previous lab, you plotted the decision boundary for  $b = -3, w_0 = 1, w_1 = 1$. That is, you had <code>b = -3, w = np.array([1,1])</code>.</p>
-</li>
-<li><p>Let's say you want to see if $b = -4, w_0 = 1, w_1 = 1$, or <code>b = -4, w = np.array([1,1])</code> provides a better model.</p>
-</li>
+<li>m is the number of training examples in the data set      </li>
+<li>$f_{\mathbf{w},b}(x^{(i)})$ is the model's prediction, while $y^{(i)}$ is the target</li>
 </ul>
-<p>Let's first plot the decision boundary for these two different $b$ values to see which one fits the data better.</p>
 <ul>
-<li>For $b = -3, w_0 = 1, w_1 = 1$, we'll plot $-3 + x_0+x_1 = 0$ (shown in blue)</li>
-<li>For $b = -4, w_0 = 1, w_1 = 1$, we'll plot $-4 + x_0+x_1 = 0$ (shown in magenta)</li>
+<li>For a  <span style="color:blue"> **linear** </span> regression model<br>
+  $f_{\mathbf{w},b}(x) = \mathbf{w} \cdot \mathbf{x} + b$  </li>
+<li>For a <span style="color:blue"> **logistic** </span> regression model<br>
+  $z = \mathbf{w} \cdot \mathbf{x} + b$<br>
+  $f_{\mathbf{w},b}(x) = g(z)$<br>
+  where $g(z)$ is the sigmoid function:<br>
+  $g(z) = \frac{1}{1+e^{-z}}$   </li>
 </ul>
+<p>The term which adds regularization is  the <span style="color:blue">$\frac{\lambda}{m} w_j $</span>.</p>
 
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Gradient-function-for-regularized-linear-regression">Gradient function for regularized linear regression<a class="anchor-link" href="#Gradient-function-for-regularized-linear-regression">&#182;</a></h3>
 </div>
 </div>
 </div>
@@ -13334,61 +13428,39 @@ $$</p>
 <div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">compute_gradient_linear_reg</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">):</span> 
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the gradient for linear regression </span>
+<span class="sd">    Args:</span>
+<span class="sd">      X (ndarray (m,n): Data, m examples with n features</span>
+<span class="sd">      y (ndarray (m,)): target values</span>
+<span class="sd">      w (ndarray (n,)): model parameters  </span>
+<span class="sd">      b (scalar)      : model parameter</span>
+<span class="sd">      lambda_ (scalar): Controls amount of regularization</span>
+<span class="sd">      </span>
+<span class="sd">    Returns:</span>
+<span class="sd">      dj_dw (ndarray (n,)): The gradient of the cost w.r.t. the parameters w. </span>
+<span class="sd">      dj_db (scalar):       The gradient of the cost w.r.t. the parameter b. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">m</span><span class="p">,</span><span class="n">n</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>           <span class="c1">#(number of examples, number of features)</span>
+    <span class="n">dj_dw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,))</span>
+    <span class="n">dj_db</span> <span class="o">=</span> <span class="mf">0.</span>
 
-<span class="c1"># Choose values between 0 and 6</span>
-<span class="n">x0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>                             
+        <span class="n">err</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">w</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>                 
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>                         
+            <span class="n">dj_dw</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">dj_dw</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">err</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>               
+        <span class="n">dj_db</span> <span class="o">=</span> <span class="n">dj_db</span> <span class="o">+</span> <span class="n">err</span>                        
+    <span class="n">dj_dw</span> <span class="o">=</span> <span class="n">dj_dw</span> <span class="o">/</span> <span class="n">m</span>                                
+    <span class="n">dj_db</span> <span class="o">=</span> <span class="n">dj_db</span> <span class="o">/</span> <span class="n">m</span>   
+    
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">dj_dw</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">dj_dw</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">lambda_</span><span class="o">/</span><span class="n">m</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
 
-<span class="c1"># Plot the two decision boundaries</span>
-<span class="n">x1</span> <span class="o">=</span> <span class="mi">3</span> <span class="o">-</span> <span class="n">x0</span>
-<span class="n">x1_other</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">-</span> <span class="n">x0</span>
-
-<span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
-<span class="c1"># Plot the decision boundary</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span><span class="n">x1</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">dlc</span><span class="p">[</span><span class="s2">&quot;dlblue&quot;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$b$=-3&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span><span class="n">x1_other</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">dlc</span><span class="p">[</span><span class="s2">&quot;dlmagenta&quot;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;$b$=-4&quot;</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
-
-<span class="c1"># Plot the original data</span>
-<span class="n">plot_data</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span><span class="n">y_train</span><span class="p">,</span><span class="n">ax</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;$x_1$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
-<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;$x_0$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper right&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Decision Boundary&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">dj_db</span><span class="p">,</span> <span class="n">dj_dw</span>
 </pre></div>
 
     </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-
-
-
- 
- 
-<div id="f17c2077-6460-48e4-ac28-f51072cb272f"></div>
-<div class="output_subarea output_widget_view ">
-<script type="text/javascript">
-var element = $('#f17c2077-6460-48e4-ac28-f51072cb272f');
-</script>
-<script type="application/vnd.jupyter.widget-view+json">
-{"model_id": "545c3ea87ede45c4afdbd94d372f5792", "version_major": 2, "version_minor": 0}
-</script>
-</div>
-
-</div>
-
 </div>
 </div>
 
@@ -13396,7 +13468,7 @@ var element = $('#f17c2077-6460-48e4-ac28-f51072cb272f');
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>You can see from this plot that <code>b = -4, w = np.array([1,1])</code> is a worse model for the training data. Let's see if the cost function implementation reflects this.</p>
+<p>Run the cell below to see it in action.</p>
 
 </div>
 </div>
@@ -13406,13 +13478,16 @@ var element = $('#f17c2077-6460-48e4-ac28-f51072cb272f');
 <div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">w_array1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
-<span class="n">b_1</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span>
-<span class="n">w_array2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
-<span class="n">b_2</span> <span class="o">=</span> <span class="o">-</span><span class="mi">4</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">X_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">y_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">w_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">X_tmp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">b_tmp</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">lambda_tmp</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">dj_db_tmp</span><span class="p">,</span> <span class="n">dj_dw_tmp</span> <span class="o">=</span>  <span class="n">compute_gradient_linear_reg</span><span class="p">(</span><span class="n">X_tmp</span><span class="p">,</span> <span class="n">y_tmp</span><span class="p">,</span> <span class="n">w_tmp</span><span class="p">,</span> <span class="n">b_tmp</span><span class="p">,</span> <span class="n">lambda_tmp</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cost for b = -3 : &quot;</span><span class="p">,</span> <span class="n">compute_cost_logistic</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">w_array1</span><span class="p">,</span> <span class="n">b_1</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cost for b = -4 : &quot;</span><span class="p">,</span> <span class="n">compute_cost_logistic</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">w_array2</span><span class="p">,</span> <span class="n">b_2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;dj_db: </span><span class="si">{</span><span class="n">dj_db_tmp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Regularized dj_dw:</span><span class="se">\n</span><span class="s2"> </span><span class="si">{</span><span class="n">dj_dw_tmp</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13429,8 +13504,9 @@ var element = $('#f17c2077-6460-48e4-ac28-f51072cb272f');
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>Cost for b = -3 :  0.36686678640551745
-Cost for b = -4 :  0.5036808636748461
+<pre>dj_db: 0.6648774569425726
+Regularized dj_dw:
+ [0.29653214748822276, 0.4911679625918033, 0.21645877535865857]
 </pre>
 </div>
 </div>
@@ -13442,10 +13518,11 @@ Cost for b = -4 :  0.5036808636748461
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p><strong>Expected output</strong></p>
-<p>Cost for b = -3 :  0.3668667864055175</p>
-<p>Cost for b = -4 :  0.5036808636748461</p>
-<p>You can see the cost function behaves as expected and the cost for <code>b = -4, w = np.array([1,1])</code> is indeed higher than the cost for <code>b = -3, w = np.array([1,1])</code></p>
+<p><strong>Expected Output</strong></p>
+
+<pre><code>dj_db: 0.6648774569425726
+Regularized dj_dw:
+ [0.29653214748822276, 0.4911679625918033, 0.21645877535865857]</code></pre>
 
 </div>
 </div>
@@ -13453,7 +13530,215 @@ Cost for b = -4 :  0.5036808636748461
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Congratulations!">Congratulations!<a class="anchor-link" href="#Congratulations!">&#182;</a></h2><p>In this lab you examined and utilized the cost function for logistic regression.</p>
+<h3 id="Gradient-function-for-regularized-logistic-regression">Gradient function for regularized logistic regression<a class="anchor-link" href="#Gradient-function-for-regularized-logistic-regression">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">compute_gradient_logistic_reg</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">):</span> 
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the gradient for linear regression </span>
+<span class="sd"> </span>
+<span class="sd">    Args:</span>
+<span class="sd">      X (ndarray (m,n): Data, m examples with n features</span>
+<span class="sd">      y (ndarray (m,)): target values</span>
+<span class="sd">      w (ndarray (n,)): model parameters  </span>
+<span class="sd">      b (scalar)      : model parameter</span>
+<span class="sd">      lambda_ (scalar): Controls amount of regularization</span>
+<span class="sd">    Returns</span>
+<span class="sd">      dj_dw (ndarray Shape (n,)): The gradient of the cost w.r.t. the parameters w. </span>
+<span class="sd">      dj_db (scalar)            : The gradient of the cost w.r.t. the parameter b. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">m</span><span class="p">,</span><span class="n">n</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">dj_dw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,))</span>                            <span class="c1">#(n,)</span>
+    <span class="n">dj_db</span> <span class="o">=</span> <span class="mf">0.0</span>                                       <span class="c1">#scalar</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+        <span class="n">f_wb_i</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">w</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span>          <span class="c1">#(n,)(n,)=scalar</span>
+        <span class="n">err_i</span>  <span class="o">=</span> <span class="n">f_wb_i</span>  <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>                       <span class="c1">#scalar</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">dj_dw</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">dj_dw</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">err_i</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span>      <span class="c1">#scalar</span>
+        <span class="n">dj_db</span> <span class="o">=</span> <span class="n">dj_db</span> <span class="o">+</span> <span class="n">err_i</span>
+    <span class="n">dj_dw</span> <span class="o">=</span> <span class="n">dj_dw</span><span class="o">/</span><span class="n">m</span>                                   <span class="c1">#(n,)</span>
+    <span class="n">dj_db</span> <span class="o">=</span> <span class="n">dj_db</span><span class="o">/</span><span class="n">m</span>                                   <span class="c1">#scalar</span>
+
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">dj_dw</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">dj_dw</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">lambda_</span><span class="o">/</span><span class="n">m</span><span class="p">)</span> <span class="o">*</span> <span class="n">w</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">dj_db</span><span class="p">,</span> <span class="n">dj_dw</span>  
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Run the cell below to see it in action.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">X_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">y_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">w_tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">X_tmp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">b_tmp</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">lambda_tmp</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">dj_db_tmp</span><span class="p">,</span> <span class="n">dj_dw_tmp</span> <span class="o">=</span>  <span class="n">compute_gradient_logistic_reg</span><span class="p">(</span><span class="n">X_tmp</span><span class="p">,</span> <span class="n">y_tmp</span><span class="p">,</span> <span class="n">w_tmp</span><span class="p">,</span> <span class="n">b_tmp</span><span class="p">,</span> <span class="n">lambda_tmp</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;dj_db: </span><span class="si">{</span><span class="n">dj_db_tmp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Regularized dj_dw:</span><span class="se">\n</span><span class="s2"> </span><span class="si">{</span><span class="n">dj_dw_tmp</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>dj_db: 0.341798994972791
+Regularized dj_dw:
+ [0.17380012933994293, 0.32007507881566943, 0.10776313396851499]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Expected Output</strong></p>
+
+<pre><code>dj_db: 0.341798994972791
+Regularized dj_dw:
+ [0.17380012933994293, 0.32007507881566943, 0.10776313396851499]</code></pre>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Rerun-over-fitting-example">Rerun over-fitting example<a class="anchor-link" href="#Rerun-over-fitting-example">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+<span class="n">ofit</span> <span class="o">=</span> <span class="n">overfit_example</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+
+ 
+ 
+<div id="028c8684-786a-4465-8a98-b7edee893190"></div>
+<div class="output_subarea output_widget_view ">
+<script type="text/javascript">
+var element = $('#028c8684-786a-4465-8a98-b7edee893190');
+</script>
+<script type="application/vnd.jupyter.widget-view+json">
+{"model_id": "8bae12042ce243d6a6cb3cd5bfb6a230", "version_major": 2, "version_minor": 0}
+</script>
+</div>
+
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+
+ 
+ 
+<div id="cd8ed516-2900-4112-ab2f-e6673cbe0ef3"></div>
+<div class="output_subarea output_widget_view ">
+<script type="text/javascript">
+var element = $('#cd8ed516-2900-4112-ab2f-e6673cbe0ef3');
+</script>
+<script type="application/vnd.jupyter.widget-view+json">
+{"model_id": "f23b1e747535472d902b5339687b1e98", "version_major": 2, "version_minor": 0}
+</script>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In the plot above, try out regularization on the previous example. In particular:</p>
+<ul>
+<li>Categorical (logistic regression)<ul>
+<li>set degree to 6, lambda to 0 (no regularization), fit the data</li>
+<li>now set lambda to 1 (increase regularization), fit the data, notice the difference.</li>
+</ul>
+</li>
+<li>Regression (linear regression)<ul>
+<li>try the same procedure.</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Congratulations!">Congratulations!<a class="anchor-link" href="#Congratulations!">&#182;</a></h2><p>You have:</p>
+<ul>
+<li>examples of cost and gradient routines with regularization added for both linear and logistic regression</li>
+<li>developed some intuition on how regularization can reduce over-fitting</li>
+</ul>
 
 </div>
 </div>
